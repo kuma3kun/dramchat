@@ -1,0 +1,60 @@
+@media screen and (max-width:375px) {
+    /*スマホ用のcssを記述*/
+    #log{
+        width: 100%;
+        position: relative;
+        left: -100%;
+        z-index: 2;
+    }
+    #main{
+        top: -90%;
+        z-index: 1;
+    }
+    #action{
+        top: -180%;
+        z-index: 3;
+        left: -100%;
+        height: 90%;
+    }
+    #chat{
+        position: fixed;
+        z-index: 50001;
+        bottom: -100px;
+        background-color: powderblue;
+    }
+    .container-fluid{
+        overflow-x: hidden;
+        overflow-y: hidden;
+    }
+    header{
+        height: 60px;
+    }
+    .modal{
+        margin-top: 60px;
+    }
+    .modal-body{
+        height: 200px;
+        overflow-y: scroll;
+    }
+    #smartMenu{
+        height: 100%;
+        display: -webkit-flex; /* Safari */
+        display: flex;
+        -webkit-flex-direction: row; /* Safari */
+        flex-direction:         row;
+        -webkit-flex-wrap: nowrap; /* Safari */
+        flex-wrap:         nowrap;
+        -webkit-justify-content: space-around; /* Safari */
+        justify-content:         space-around;
+        -webkit-align-items: center; /* Safari */
+        align-items:         center;
+    }
+    #slideChat{
+        display: block;
+        z-index: 5000;
+        position: absolute;
+        right: 20px;
+        bottom: 20px;
+        border-radius: 50%;
+    }
+}

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Entrance</title>
+    <script>
+        function enterRoom(link){
+            let name = document.getElementById("userName").value;
+            link.href += "&userName=" + name;
+        }
+    </script>
+</head>
+<body>
+    <div id="container">
+        <header>
+            部屋選択
+        </header>
+        <main>
+            ユーザ名<input id="userName" type="text"/>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ルーム名</th>
+                        <th>入室数/最大人数</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>ルームA</td>
+                        <td>2/4</td>
+                        <td>
+                            <a href="/room?roomId=1" onclick="enterRoom(this)">入室</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>ルームB</td>
+                        <td>1/4</td>
+                        <td>
+                            <a href="/room?roomId=2" onclick="enterRoom(this)">入室</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </main>
+    </div>
+</body>
+</html>

@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no"> 
+    <link rel="stylesheet" type="text/css" href="/static/base.css">
+    <link rel="stylesheet" type="text/css" href="/static/mobile.css">
+    <title>ChatMock</title>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script type="text/javascript" src="http://192.168.100.163:8888/socket.io/socket.io.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script type="text/javascript">
+        // 基本的な情報を保持するJSON
+        roomStatus = {};
+        // 部屋ID
+        roomId = "";
+        // ログインユーザ名
+        loginName = "";
+
+        /**
+         * ログ追加
+         * @msg ログ一覧に表示するメッセージ
+         */
+        var logAdd = (msg) => {
+            let messages = document.getElementById('messages');
+            let li = document.createElement('li');
+            li.textContent = msg;
+            messages.appendChild(li);
+        }
+
+        /**
+         *  GETパラメータを配列にして返す
+         *  @return パラメータのObject
+         */
+        var getUrlVars = () => {
+            var vars = {};
+            var param = location.search.substring(1).split('&');
+            for(var i = 0; i < param.length; i++) {
+                var keySearch = param[i].search(/=/);
+                var key = '';
+                if(keySearch != -1) key = param[i].slice(0, keySearch);
+                var val = param[i].slice(param[i].indexOf('=', 0) + 1);
+                if(key != '') vars[key] = decodeURI(val);
+            } 
+            return vars; 
+        }
+
+        // socket通信が開始される
+        var socket = io.connect("http://192.168.100.163:8888");
+
+        // emit用共通関数
+        var emit = (name, data) => {
+            // json → 文字列に変換して送信する関数
+            socket.emit(name, JSON.stringify(data));
+        }
+
+        /**
+         * ルーム入室（socket接続）
+         * @id 部屋ID
+         * @name 入室者名
+         */
+        var roomJoin = (id, name) => {
+            socket.emit("roomJoin", {userName: name, roomId : id});
+        }
+        
+        /**
+         * チャット送信
+         * @id 部屋ID
+         * @name 発信者名
+         * @msg 送信テキスト
+         */
+        var chatSend = (id, name, msg) => {
+            // console.log("チャット送信");
+            let submitData = {roomId: id, name: name, text: msg};
+            socket.emit('message', submitData);
+        }
+
+        /**
+         * メイン画面更新
+         */
+        var mainReload = () => {
+            roomStatus.factors.forEach( (fanc) => {
+                let id = fanc.id;
+                if(id == 0){
+                    document.getElementById("field").style.backgroundImage = "url(" + fanc.active + ")";
+                }
+            });
+        }
+
+        // 入室時にGETパラメータの部屋番号でルームにjoinする
+        window.onload = () => {
+            let chatButton = document.getElementById("chatSend");
+            // 部屋ID設定
+            roomId = getUrlVars(0)["roomId"];
+            // ログインユーザ名設定
+            loginName = getUrlVars(0)["userName"];
+
+            // ルームログイン処理
+            roomJoin(roomId, loginName)
+
+            // チャット送信ボタンイベント定義
+            chatButton.addEventListener("click", function(){
+                let chatValue = document.getElementById("chatValue").value;
+                chatSend(roomId, loginName, chatValue);
+            });
+
+            /**
+             * チャット着信イベント定義
+             * @data JSONデータ
+             * {
+             *   msg: 表示テキスト
+             * }
+             */
+            socket.on('receirveMessage', function(data){
+                // console.log("チャット着信");
+                // console.log(data);
+                logAdd(data.msg);
+
+                // TODO:セリフ部分なので切り出し予定
+                let quote = document.getElementById('quote');
+                quote.textContent = data.msg;
+            });
+            
+            /**
+             * ログイン処理レスポンス受信
+             */
+            socket.on("roomJoinResponse", function(data){
+                // console.log("ログイン処理受信");
+                // console.log(data);
+                roomStatus = data.roomStatus;
+            });
+        };
+    </script>
+    <script>
+    /**
+     * モバイル専用UI処理
+     */
+    if(navigator.userAgent.match(/(iPhone|iPad|iPod|Android)/)){
+        $(function(){
+            let log = $('#log'); // スライドインするメニューを指定
+            let logBtn = $('#slideLog'); // メニューボタンを指定
+            let body = $(document.body);
+            let logWidth = log.outerWidth();
+
+            let action = $("#action");
+            let actionBtn = $("#slideAction");
+            let actionWidth = action.outerWidth();
+
+            let chat = $("#chat");
+            let chatBtn = $("#slideChat");
+
+            // メニューボタンをクリックした時の動き
+            logBtn.on('click', function(){
+                // body に open クラスを付与する
+                log.toggleClass('open');
+                if(log.hasClass('open')){
+                    // open クラスが body についていたらメニューをスライドインする
+                    body.animate({'left' : logWidth }, 300);
+                    log.animate({'left' : 0 }, 300);
+                } else {
+                    // open クラスが body についていなかったらスライドアウトする
+                    log.animate({'left' : -logWidth }, 300);
+                    body.animate({'left' : 0 }, 300);
+                }
+            });
+            // メニューボタンをクリックした時の動き
+            actionBtn.on('click', function(){
+                // body に open クラスを付与する
+                body.toggleClass('open');
+                if(body.hasClass('open')){
+                    // open クラスが body についていたらメニューをスライドインする
+                    body.animate({'left' : actionWidth }, 300);
+                    action.animate({'left' : 0 }, 300);
+                } else {
+                    // open クラスが body についていなかったらスライドアウトする
+                    action.animate({'left' : -actionWidth }, 300);
+                    body.animate({'left' : 0 }, 300);
+                }
+            });
+            // チャットボタンをクリックした時の動き
+            chatBtn.on('click', function(){
+                // body に open クラスを付与する
+                chat.toggleClass('open');
+                if(chat.hasClass('open')){
+                    // open クラスが body についていたらメニューをスライドインする
+                    chat.animate({'bottom' : 0 }, 300);
+                    chatBtn.animate({'bottom' : "100px" }, 300);
+                } else {
+                    // open クラスが body についていなかったらスライドアウトする
+                    chat.animate({'bottom' : "-100px" }, 300);
+                    chatBtn.animate({'bottom' : "20px" }, 300);
+                }
+            });
+        });
+    }
+    </script>
+</head>
+<body>
+    <div class="container-fluid full-height">
+        <div class="row full-height">
+            <header class="col-xs-12">
+                <div id="smartMenu">
+                    <button id="slideLog" class="btn btn-default mobile_only">
+                        <span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+                    </button>
+                    <button id="slideInfo" class="btn btn-default" data-toggle="modal" data-target="#activeInfo" onclick="activeInfoReload()">
+                        <span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+                    </button>
+                    <button id="slideInfo" class="btn btn-default" data-toggle="modal" data-target="#roomInfo">
+                        <span class="glyphicon glyphicon-home" aria-hidden="true"></span>
+                    </button>
+                    <button id="slideDice" class="btn btn-default" data-toggle="modal" data-target="#dice">
+                        <span class="glyphicon glyphicon-share" aria-hidden="true"></span>
+                    </button>
+                    <button id="slideSay" class="btn btn-default" data-toggle="modal" data-target="#say">
+                        <span class="glyphicon glyphicon-bullhorn" aria-hidden="true"></span>
+                    </button>
+                    <button id="slideAction" class="btn btn-default mobile_only">
+                        <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
+                    </button>
+                </div>
+            </header>
+            <div id="log" class="col-md-4 side">
+                <ul id="messages">
+                </ul>
+            </div>
+            <div id="main" class="col-md-6 col-xs-12 no-padding">
+                <div id="field">
+                </div>
+                <div id="quote">
+                </div>
+            </div>
+            <div id="action" class="col-md-2 col-xs-12 side">
+                <div class="row">
+                    <div class="col-xs-12 no-padding">
+                        <button id="actionInfo" class="btn btn-default" data-toggle="modal" data-target="#characterCreate">
+                            キャラ作成
+                        </button>
+                        <button id="actionPicture" class="btn btn-default" data-toggle="modal" data-target="#pictureAdd">
+                            画像追加
+                        </button>
+                        <button id="actionDice" class="btn btn-default" data-toggle="modal" data-target="#dice">
+                            ダイス
+                        </button>
+                        <button id="actionSay" class="btn btn-default" data-toggle="modal" data-target="#say">
+                            発言
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <button id="slideChat" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></button>
+            <div id="chat" class="col-md-2 col-xs-12 no-padding form-inline">
+                <input id="chatValue" class="form-control" />
+                <button id="chatSend" class="btn btn-default form-control">送信</button>
+            </div>
+            <!-- 操作キャラ設定 -->
+            <div class="modal fade" id="activeInfo" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"><span>×</span></button>
+                            <h4 class="modal-title">操作キャラ設定</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>操作キャラ</p>
+                            <select id="activeCharacter" name="activeCharacter">
+                            </select>
+                            <p>立ち絵</p>
+                            <select id="activeCharacter" name="activeCharacter">
+                                <option value="0"></option>
+                                <option value="1">絵1</option>
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" onclick="activeInfo_submit()">設定</button>
+                            <button type="button" class="btn btn-default" data-dismiss="modal">閉じる</button>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    /**
+                     * 操作キャラ設定フォーム用意
+                     */
+                    function activeInfoReload(){
+                        // console.log("操作キャラ設定フォーム用意");
+                        // console.log(roomStatus["factors"]);
+                        // 操作キャラ選択
+                        let select = document.getElementById("activeCharacter");
+
+                        select.textContent = null;
+                        select.appendChild(document.createElement('option'));
+                        let option = roomStatus["factors"].map(function(fact){
+                            let o = document.createElement('option');
+                            o.setAttribute('value', fact["id"]);
+                            o.innerHTML = fact["name"];
+                            return o;
+                        });
+                        // console.log(option);
+                        option.forEach( (o) => {
+                            select.appendChild(o);
+                        });
+                    }
+                </script>
+            </div>
+            <!-- キャラ作成 -->
+            <div class="modal fade" id="characterCreate" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"><span>×</span></button>
+                            <h4 class="modal-title">キャラ作成</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>名前</p>
+                            <input id="characterCreate_name" type="text" />
+                            <p>位置</p>
+                            <select id="characterCreate_point" name="activeCharacter">
+                                <option value="0"></option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" onclick="characterCreate_submit()">作成</button>
+                            <button type="button" class="btn btn-default" data-dismiss="modal">キャンセル</button>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    function characterCreate_submit(){
+                        
+                    }
+                </script>
+            </div>
+            <!-- ルーム設定 -->
+            <div class="modal fade" id="roomInfo" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"><span>×</span></button>
+                            <h4 class="modal-title">ルーム設定</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>背景</p>
+                            <select id="roomInfo_background" name="activeCharacter">
+                                <option value="0"></option>
+                                <option value="1">背景1</option>
+                                <option value="2">背景2</option>
+                            </select>
+                            <p>BGM</p>
+                            <select id="roomInfo_bgm" name="activeCharacter">
+                                <option value="0"></option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" onclick="roomInfo_submit()">設定</button>
+                            <button type="button" class="btn btn-default" data-dismiss="modal">キャンセル</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 画像追加 -->
+            <div class="modal fade" id="pictureAdd" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"><span>×</span></button>
+                            <h4 class="modal-title">画像追加</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>対象</p>
+                            <select id="pictureAdd_target" name="activeCharacter">
+                                <option value="0">背景</option>
+                                <option value="1"></option>
+                                <option value="2"></option>
+                            </select>
+                            <p>タグ</p>
+                            <input id="pictureAdd_tag" type="text" class="form-control"/>
+                            <p>画像</p>
+                            <input id="pictureAdd_picture" class="form-control" type="file">
+                            <div id="pictureAdd_preview"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button id="pictureAdd_submit" type="button" class="btn btn-primary">追加</button>
+                            <button type="button" class="btn btn-default" data-dismiss="modal">キャンセル</button>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    $(function(){
+                        var file = "";
+
+                        //画像ファイルプレビュー表示のイベント追加 fileを選択時に発火するイベントを登録
+                        $('#pictureAdd_picture').on('change', function(e) {
+                            console.log("画像プレビュー");
+                            var reader = new FileReader(),
+                                preview = $("#pictureAdd_preview");
+                                t = this;
+                            file = e.target.files[0];
+
+                            // 画像ファイル以外の場合は何もしない
+                            if(file.type.indexOf("image") < 0){
+                                return false;
+                            }
+
+                            // ファイル読み込みが完了した際のイベント登録
+                            reader.onload = (function(file) {
+                                return function(e) {
+                                    //既存のプレビューを削除
+                                    preview.empty();
+                                    // .prevewの領域の中にロードした画像を表示するimageタグを追加
+                                    preview.append($('<img>').attr({
+                                            id: "pictureAdd_image",
+                                            src: e.target.result,
+                                            width: "150px",
+                                            class: "preview",
+                                            title: file.name
+                                        }));
+                                };
+                            })(file);
+
+                            reader.readAsDataURL(file);
+                        });
+
+                        /**
+                         * 画像追加送信
+                         */
+                        $('#pictureAdd_submit').on('click', function(e) {
+                            var oFile = file;
+                            m_file_name = oFile.name;
+                            
+                            var reader = new FileReader();
+                            reader.readAsDataURL(oFile);
+
+                            //ファイル読込成功イベント
+                            reader.onload = function(e) {
+                                let target = document.getElementById("pictureAdd_target");
+                                let targetValue = target.value;
+                                let tag = document.getElementById("pictureAdd_tag").value;
+                                let image = reader.result;
+                                let targetName = target.options[target.selectedIndex].text;
+                                socket.emit("pictureAdd_send", {roomId : roomId, userName: loginName, target: targetValue, tag: tag, image: image, targetName: targetName});
+                            }
+                        });
+
+                        /**
+                         * 画像追加受信
+                         * @data レスポンスJSONデータ
+                         * {
+                         *   target: 追加対象ID
+                         *   , tag: 追加画像名
+                         *   , image: 追加画像データ
+                         * }
+                         */
+                        socket.on('pictureAdd_receirve', function(data){
+                            console.log("画像追加着信");
+                            
+                            roomStatus["factors"][data["target"]]["images"].push({tag: data["tag"], image: data["image"]});
+                            // 背景の場合の背景更新処理
+                            // if(data["target"] == 0){
+                            //     $('#field').css({
+                            //         backgroundImage: "url(" + data["image"] + ")"
+                            //     });
+                            // }
+                            console.log(roomStatus);
+                            mainReload();
+                        });
+                    });
+                </script>
+            </div>
+            <!-- ダイス -->
+            <div class="modal fade" id="dice" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"><span>×</span></button>
+                            <h4 class="modal-title">ダイス</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>サイコロ</p>
+                            <select id="characterCreate_point" name="activeCharacter">
+                                <option value="0"></option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="6">6</option>
+                                <option value="8">8</option>
+                            </select>
+                            面
+                            <p>個数</p>
+                            <select id="characterCreate_point" name="activeCharacter">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                            </select>
+                            個
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" onclick="dice_submit()">振る</button>
+                            <button type="button" class="btn btn-default" data-dismiss="modal">キャンセル</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 発言 -->
+            <div class="modal fade" id="say" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"><span>×</span></button>
+                            <h4 class="modal-title">発言</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>発言者</p>
+                            <select id="say_name" name="activeCharacter">
+                                <option value="0"></option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="6">6</option>
+                                <option value="8">8</option>
+                            </select>
+                            <p>セリフ</p>
+                            <input id="say_text" type="text" class="form-control"/>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" onclick="say_submit()">発言</button>
+                            <button type="button" class="btn btn-default" data-dismiss="modal">キャンセル</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+</body>
+</html>

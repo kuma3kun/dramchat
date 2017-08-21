@@ -1,0 +1,80 @@
+html,body{
+    background-color: #F5ECCE;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+}
+header{
+    position: fixed;
+    height: 90px;
+    background-color: black;
+    color: white;
+    z-index: 50000;
+}
+#log{
+    background-color: #BDBDBD;
+    height: 90%;
+    overflow-y: scroll;
+}
+#main{
+    height: 90%;
+}
+#field{
+    height: 70%;
+    position: relative;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+#quote{
+    height: 30%;
+    background-color: #424242;
+    color: white;
+}
+#action{
+    height: 80%;
+    background-color: #A9D0F5;
+    overflow-y: scroll;
+}
+#action button{
+    width: 100%;
+}
+.user{
+    position: absolute;
+    height: 100px;
+    width: 100px;
+    border: 2px solid black;
+    box-sizing: border-box;
+    background-color: white;
+}
+.action-button{
+    background-color: #FE9A2E;
+}
+.action-button-open{
+    background-color: #F6E3CE;
+}
+ul{
+    list-style: none;
+    padding: 0;
+}
+.no-padding{
+    padding: 0 !important;
+}
+.full-height{
+    height: 100%;
+}
+#collapseExample{
+    background-color: white;
+}
+.modal{
+    margin-top: 90px;
+}
+#slideChat{
+    display: none;
+}
+@media screen and (min-width: 800px) {
+   /* 表示領域が800px以上の場合に適用するスタイル */
+   .mobile_only{
+        display: none !important;
+    }
+}
