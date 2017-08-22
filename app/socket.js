@@ -4,16 +4,18 @@
  */
 
 // インポート
-var http = require('http');
-var socketio = require('socket.io');
+const http = require('http');
+const socketio = require('socket.io');
+const BCDice = require('bcdice-js').BCDice; // CommonJS
+const bcdice = new BCDice();
 
 //サーバインスタンス作成
-var server = http.createServer(function (req, res) {
+const server = http.createServer(function (req, res) {
     res.writeHead(200, {'Content-Type':'text/html'});
     res.end('server connected');
 });
 
-var io = socketio.listen(server);
+const io = socketio.listen(server);
 
 //8888番ポートで起動
 server.listen(8888);
@@ -110,4 +112,20 @@ io.sockets.on('connection', function (socket) {
         io.to(roomId).emit('receirveMessage', {msg: msg});
         io.to(roomId).emit("pictureAdd_receirve", {target: data["target"], tag: data["tag"], image: data["image"]});
     });
+
+    /**
+     * ダイスリクエスト受信
+     */
+    socket.on('dice_send', (data) => {
+        console.log(data);
+
+        // ダイスボット種類
+        bcdice.setGameByTitle('DiceBot');
+        bcdice.setMessage(data.diceNum + "d" + data.diceType);
+        console.log(bcdice.dice_command());
+        let result = bcdice.dice_command();
+        let msg = data.playName + ":" + result[0];
+
+        io.to(roomId).emit('receirveMessage', {msg: msg});
+    })
 });

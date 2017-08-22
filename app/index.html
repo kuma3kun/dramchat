@@ -490,17 +490,20 @@
                         </div>
                         <div class="modal-body">
                             <p>サイコロ</p>
-                            <select id="characterCreate_point" name="activeCharacter">
-                                <option value="0"></option>
+                            <select id="dice_type" name="activeCharacter">
+                                <option></option>
                                 <option value="2">2</option>
                                 <option value="3">3</option>
                                 <option value="4">4</option>
                                 <option value="6">6</option>
                                 <option value="8">8</option>
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="100">100</option>
                             </select>
                             面
                             <p>個数</p>
-                            <select id="characterCreate_point" name="activeCharacter">
+                            <select id="dice_num" name="activeCharacter">
                                 <option value="1">1</option>
                                 <option value="2">2</option>
                                 <option value="3">3</option>
@@ -516,6 +519,15 @@
                         </div>
                     </div>
                 </div>
+                <script>
+                    function dice_submit(){
+                        let type = document.getElementById("dice_type").value;
+                        let num = document.getElementById("dice_num").value;
+                        let name = loginName // サイコロ振る人の名前。とりあえずユーザ
+
+                        socket.emit("dice_send", {playName: name, diceType : type, diceNum: num});
+                    }
+                </script>
             </div>
             <!-- 発言 -->
             <div class="modal fade" id="say" tabindex="-1">

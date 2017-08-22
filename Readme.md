@@ -24,12 +24,19 @@
 ### 環境構築
 - node.js v8.2.1
 - socket.io v2.0.3
-'''
-//アプリサーバ（とりあえずのテンプレ返し）
+- [BCDice for JavaScript (Browser/Node.js)](https://github.com/ukatama/bcdice-js) v0.2.1
+
+```
+//この2つを立ち上げればOK
+//アプリサーバ（とりあえずのテンプレ返し）　デフォルトポート3000
 node app.js
-//ソケットサーバ（主な機能はこっち）
+//ソケットサーバ（主な機能はこっち）　デフォルトポート8888
 node socket.js
-'''
+```
+
+### License
+MIT License
+- [BCDice: Modified BSD license](https://github.com/torgtaitai/BCDice)
 ### いつか実装予定機能
 - マップ機能(SpreadJSみたいなの想定)
 - 音声合成ソフト連携(ゆっくりボイスなど)
