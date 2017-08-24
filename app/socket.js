@@ -105,12 +105,13 @@ io.sockets.on('connection', function (socket) {
     socket.on('pictureAdd_send', function(data){
         console.log("画像追加リクエスト受信");
         console.log(data);
-        var msg = data["targetName"] + "に画像：" + data["tag"] + "を追加しました。";
+        let msg = "「" + data.targetName + "」に画像：" + data.tag + "を追加しました。";
+        let addData = {tag: data.tag, image: data.image}
         logWrite(msg);
-        roomStatus.get(roomId)["factors"][data["target"]]["images"].push({tag: data["tag"], image: data["image"]});
+        roomStatus.get(roomId).factors[data.target].images.push(addData);
         console.log(roomStatus);
         io.to(roomId).emit('receirveMessage', {msg: msg});
-        io.to(roomId).emit("pictureAdd_receirve", {target: data["target"], tag: data["tag"], image: data["image"]});
+        io.to(roomId).emit("pictureAdd_receirve", {target: data.target, addData: addData});
     });
 
     /**
@@ -128,4 +129,32 @@ io.sockets.on('connection', function (socket) {
 
         io.to(roomId).emit('receirveMessage', {msg: msg});
     })
+
+    /**
+     * 発言リクエスト受信
+     */
+    socket.on('say_send', (data) => {
+        console.log("発言リクエスト");
+        console.log(data);
+        logWrite(data.msg);
+        console.log(roomStatus);
+        io.to(roomId).emit('say_receirve', {name: data.name, msg: data.msg});
+    });
+
+    /**
+     * キャラ作成リクエスト受信
+     */
+    socket.on('characterCreate_send', (data) => {
+        console.log("発言リクエスト");
+        console.log(data);
+        let msg = "「" + data.name + "」を作成しました。";
+        let no = roomStatus.get(roomId).factors.length;
+        let fact = {id: no, name: data.name, position: data.position, images: [], active: ""};
+
+        logWrite(data.msg);
+        roomStatus.get(roomId).factors.push(fact);
+        console.log(roomStatus);
+        io.to(roomId).emit('receirveMessage', {msg: msg});
+        io.to(roomId).emit('characterCreate_receirve', fact);
+    });
 });

@@ -72,6 +72,14 @@ ul{
 #slideChat{
     display: none;
 }
+.stand_picture{
+    width: 1000px;
+    height: 100%;
+}
+.stand_picture img{
+    height: 100%;
+    width: auto;
+}
 @media screen and (min-width: 800px) {
    /* 表示領域が800px以上の場合に適用するスタイル */
    .mobile_only{

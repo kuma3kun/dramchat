@@ -8,13 +8,10 @@
     <title>ChatMock</title>
     <!-- Latest compiled and minified CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-
     <!-- Optional theme -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
-
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script type="text/javascript" src="http://127.0.0.1:8888/socket.io/socket.io.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script type="text/javascript">
         // 基本的な情報を保持するJSON
         roomStatus = {};
@@ -22,6 +19,8 @@
         roomId = "";
         // ログインユーザ名
         loginName = "";
+        // 自分の設定{id, position, active}
+        activeStatus = {};
 
         /**
          * ログ追加
@@ -85,10 +84,22 @@
          * メイン画面更新
          */
         var mainReload = () => {
-            roomStatus.factors.forEach( (fanc) => {
-                let id = fanc.id;
+            roomStatus.factors.forEach( (fact) => {
+                let id = fact.id;
                 if(id == 0){
-                    document.getElementById("field").style.backgroundImage = "url(" + fanc.active + ")";
+                    document.getElementById("field").style.backgroundImage = "url(" + fact.active + ")";
+                }else if(id == 1){
+                    document.getElementById("stand1").style.backgroundImage = "url(" + fact.active + ")";
+                }else if(id == 2){
+                    document.getElementById("stand2").style.backgroundImage = "url(" + fact.active + ")";
+                }else if(id == 3){
+                    document.getElementById("stand3").style.backgroundImage = "url(" + fact.active + ")";
+                }else if(id == 4){
+                    document.getElementById("stand4").style.backgroundImage = "url(" + fact.active + ")";
+                }else if(id == 5){
+                    document.getElementById("stand5").style.backgroundImage = "url(" + fact.active + ")";
+                }else if(id == 6){
+                    document.getElementById("stand6").style.backgroundImage = "url(" + fact.active + ")";
                 }
             });
         }
@@ -121,10 +132,6 @@
                 // console.log("チャット着信");
                 // console.log(data);
                 logAdd(data.msg);
-
-                // TODO:セリフ部分なので切り出し予定
-                let quote = document.getElementById('quote');
-                quote.textContent = data.msg;
             });
             
             /**
@@ -232,8 +239,16 @@
             </div>
             <div id="main" class="col-md-6 col-xs-12 no-padding">
                 <div id="field">
+                    <div id="stand1" class="stand_picture"></div>
+                    <div id="stand2" class="stand_picture"></div>
+                    <div id="stand3" class="stand_picture"></div>
+                    <div id="stand4" class="stand_picture"></div>
+                    <div id="stand5" class="stand_picture"></div>
+                    <div id="stand6" class="stand_picture"></div>
                 </div>
                 <div id="quote">
+                    <p id="sayName"></p>
+                    <p id="sayText"></p>
                 </div>
             </div>
             <div id="action" class="col-md-2 col-xs-12 side">
@@ -242,7 +257,7 @@
                         <button id="actionInfo" class="btn btn-default" data-toggle="modal" data-target="#characterCreate">
                             キャラ作成
                         </button>
-                        <button id="actionPicture" class="btn btn-default" data-toggle="modal" data-target="#pictureAdd">
+                        <button id="actionPicture" class="btn btn-default" data-toggle="modal" data-target="#pictureAdd" onclick="pictureAddReload()">
                             画像追加
                         </button>
                         <button id="actionDice" class="btn btn-default" data-toggle="modal" data-target="#dice">
@@ -269,12 +284,22 @@
                         </div>
                         <div class="modal-body">
                             <p>操作キャラ</p>
-                            <select id="activeCharacter" name="activeCharacter">
+                            <select id="activeInfo_my">
                             </select>
                             <p>立ち絵</p>
-                            <select id="activeCharacter" name="activeCharacter">
+                            <select id="activeInfo_stand">
                                 <option value="0"></option>
                                 <option value="1">絵1</option>
+                            </select>
+                            <p>位置</p>
+                            <select id="activeInfo_position">
+                                <option></option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
                             </select>
                         </div>
                         <div class="modal-footer">
@@ -291,21 +316,54 @@
                         // console.log("操作キャラ設定フォーム用意");
                         // console.log(roomStatus["factors"]);
                         // 操作キャラ選択
-                        let select = document.getElementById("activeCharacter");
+                        let mySelect = document.getElementById("activeInfo_my");
 
-                        select.textContent = null;
-                        select.appendChild(document.createElement('option'));
-                        let option = roomStatus["factors"].map(function(fact){
+                        mySelect.textContent = null;
+                        mySelect.appendChild(document.createElement('option'));
+                        let myOption = roomStatus.factors.map(function(fact){
                             let o = document.createElement('option');
                             o.setAttribute('value', fact["id"]);
                             o.innerHTML = fact["name"];
                             return o;
                         });
                         // console.log(option);
-                        option.forEach( (o) => {
-                            select.appendChild(o);
+                        myOption.forEach( (o) => {
+                            mySelect.appendChild(o);
                         });
                     }
+
+                    /**
+                     * 操作キャラ設定更新
+                     */
+                    function activeInfo_submit(){
+                        let fact = document.getElementById("activeInfo_my").value;
+                        let pic = document.getElementById("activeInfo_stand").value;
+                        let position = document.getElementById("activeInfo_position").value;
+                        activeStatus = {id: data.factId, position: data.position, active: pic}
+                    }
+
+                    $(function(){
+                        $("#activeInfo_my").on("change", () => {
+                            // 立ち絵選択
+                            let no = document.getElementById("activeInfo_my").value;
+                            let mySelect = document.getElementById("activeInfo_stand");
+
+                            mySelect.textContent = null;
+                            mySelect.appendChild(document.createElement('option'));
+                            let myOption = roomStatus.factors[no].images.map(function(pics, index){
+                                let o = document.createElement('option');
+                                o.setAttribute('value', index);
+                                o.innerHTML = pics.tag;
+                                return o;
+                            });
+                            // console.log(option);
+                            myOption.forEach( (o) => {
+                                mySelect.appendChild(o);
+                            });
+                            let position = document.getElementById("activeInfo_position");
+                            position.options[roomStatus.factors[no].position].selected = true;
+                        });
+                    });
                 </script>
             </div>
             <!-- キャラ作成 -->
@@ -321,7 +379,7 @@
                             <input id="characterCreate_name" type="text" />
                             <p>位置</p>
                             <select id="characterCreate_point" name="activeCharacter">
-                                <option value="0"></option>
+                                <option></option>
                                 <option value="1">1</option>
                                 <option value="2">2</option>
                                 <option value="3">3</option>
@@ -337,9 +395,25 @@
                     </div>
                 </div>
                 <script>
+                    // キャラ作成ボタンイベント定義
                     function characterCreate_submit(){
+                        let name = document.getElementById("characterCreate_name").value;
+                        let position = document.getElementById("characterCreate_point").value;
                         
+                        socket.emit('characterCreate_send', {name: name, position: position});
                     }
+
+                    /**
+                     * キャラ作成着信イベント定義
+                     * @data JSONデータ
+                     */
+                    socket.on('characterCreate_receirve', function(data){
+                        console.log("キャラ作成着信");
+                        console.log(data);
+                        logAdd(data.msg);
+                        roomStatus.factors.push(data);
+                        console.log(roomStatus);
+                    });
                 </script>
             </div>
             <!-- ルーム設定 -->
@@ -399,6 +473,28 @@
                     </div>
                 </div>
                 <script>
+                    /**
+                     * 画像追加アクションボタン押下時フォームリセット
+                     */
+                    function pictureAddReload(){
+                        // console.log("操作キャラ設定フォーム用意");
+                        // console.log(roomStatus["factors"]);
+                        // 操作キャラ選択
+                        let select = document.getElementById("pictureAdd_target");
+
+                        select.textContent = null;
+                        select.appendChild(document.createElement('option'));
+                        let option = roomStatus["factors"].map(function(fact){
+                            let o = document.createElement('option');
+                            o.setAttribute('value', fact["id"]);
+                            o.innerHTML = fact["name"];
+                            return o;
+                        });
+                        // console.log(option);
+                        option.forEach( (o) => {
+                            select.appendChild(o);
+                        });
+                    }
                     $(function(){
                         var file = "";
 
@@ -451,7 +547,7 @@
                                 let tag = document.getElementById("pictureAdd_tag").value;
                                 let image = reader.result;
                                 let targetName = target.options[target.selectedIndex].text;
-                                socket.emit("pictureAdd_send", {roomId : roomId, userName: loginName, target: targetValue, tag: tag, image: image, targetName: targetName});
+                                socket.emit("pictureAdd_send", {targetName: targetName, target: targetValue, tag: tag, image: image});
                             }
                         });
 
@@ -467,7 +563,7 @@
                         socket.on('pictureAdd_receirve', function(data){
                             console.log("画像追加着信");
                             
-                            roomStatus["factors"][data["target"]]["images"].push({tag: data["tag"], image: data["image"]});
+                            roomStatus.factors[data.target].images.push(data.addData);
                             // 背景の場合の背景更新処理
                             // if(data["target"] == 0){
                             //     $('#field').css({
@@ -475,7 +571,6 @@
                             //     });
                             // }
                             console.log(roomStatus);
-                            mainReload();
                         });
                     });
                 </script>
@@ -520,6 +615,9 @@
                     </div>
                 </div>
                 <script>
+                    /**
+                     * ダイス送信
+                     */
                     function dice_submit(){
                         let type = document.getElementById("dice_type").value;
                         let num = document.getElementById("dice_num").value;
@@ -556,6 +654,33 @@
                         </div>
                     </div>
                 </div>
+                <script>
+                    // 発言送信ボタンイベント定義
+                    function say_submit(){
+                        let sayName = document.getElementById("say_name").value;
+                        let msg = document.getElementById("say_text").value;
+                        socket.emit('say_send', {roomId: roomId, name: sayName, msg: msg});
+                    }
+
+                    /**
+                     * 発言着信イベント定義
+                     * @data JSONデータ
+                     * {
+                     *   msg: 表示テキスト
+                     * }
+                     */
+                    socket.on('say_receirve', function(data){
+                        console.log("発言着信");
+                        console.log(data);
+                        logAdd(data.msg);
+
+                        // TODO:セリフ部分なので切り出し予定
+                        let sayName = document.getElementById('sayName');
+                        let sayText = document.getElementById('sayText');
+                        sayName.textContent = data.name;
+                        sayText.textContent = data.msg;
+                    });
+                </script>
             </div>
         </div>
     </div>

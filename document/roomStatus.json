@@ -1,0 +1,10 @@
+{
+    logs: [
+        {logId: 0, msg: "表示テキスト", action: 
+            {actionId: 0, data: ""} // アクションのIDとそれに使用するデータ
+        }
+    ] // ログ
+    , factors: [ // キャラクター単位　画像データなど保持想定
+        {id: 0, name: "背景", position: 0, images: [], active: ""}
+    ]
+}
